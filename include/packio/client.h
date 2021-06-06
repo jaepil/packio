@@ -36,6 +36,8 @@ public:
     using rpc_type = Rpc;
     //! The call ID type
     using id_type = typename rpc_type::id_type;
+    //! The native type of the serialization library
+    using native_type = typename rpc_type::native_type;
     //! The response of a RPC call
     using response_type = typename rpc_type::response_type;
     //! The socket type
@@ -132,6 +134,21 @@ public:
     }
 
     //! @overload
+    template <PACKIO_COMPLETION_TOKEN_FOR(void(error_code))
+                  NotifyHandler PACKIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
+    auto async_notify(
+        std::string_view name,
+        native_type&& args,
+        NotifyHandler&& handler PACKIO_DEFAULT_COMPLETION_TOKEN(executor_type))
+    {
+        return net::async_initiate<NotifyHandler, void(error_code)>(
+            initiate_async_notify(this),
+            handler,
+            name,
+            std::tuple{std::forward<native_type>(args)});
+    }
+
+    //! @overload
     template <
         PACKIO_COMPLETION_TOKEN_FOR(void(error_code))
             NotifyHandler PACKIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type),
@@ -167,6 +184,22 @@ public:
             handler,
             name,
             std::forward<ArgsTuple>(args),
+            call_id);
+    }
+
+    //! @overload
+    template <PACKIO_COMPLETION_TOKEN_FOR(void(error_code, response_type))
+                  CallHandler PACKIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
+    auto async_call(
+        std::string_view name,
+        native_type&& args,
+        CallHandler&& handler PACKIO_DEFAULT_COMPLETION_TOKEN(executor_type),
+        std::optional<std::reference_wrapper<id_type>> call_id = std::nullopt)
+    {
+        return async_call(
+            name,
+            std::tuple{std::forward<native_type>(args)},
+            std::forward<CallHandler>(handler),
             call_id);
     }
 

@@ -193,6 +193,17 @@ public:
         return id.dump();
     }
 
+    static auto serialize_notification(std::string_view method, native_type&& args)
+        -> std::string
+    {
+        return nlohmann::json({
+                                  {"jsonrpc", "2.0"},
+                                  {"method", method},
+                                  {"params", std::forward<native_type>(args)},
+                              })
+            .dump();
+    }
+
     template <typename... Args>
     static auto serialize_notification(std::string_view method, Args&&... args)
         -> std::enable_if_t<internal::positional_args_v<Args...>, std::string>
@@ -227,6 +238,21 @@ public:
         static_assert(
             internal::positional_args_v<Args...> || internal::named_args_v<Args...>,
             "JSON-RPC does not support mixed named and unnamed arguments");
+    }
+
+    template <typename... Args>
+    static auto serialize_request(
+        const id_type& id,
+        std::string_view method,
+        native_type&& args) -> std::string
+    {
+        return nlohmann::json({
+                                  {"jsonrpc", "2.0"},
+                                  {"method", method},
+                                  {"params", std::forward<native_type>(args)},
+                                  {"id", id},
+                              })
+            .dump();
     }
 
     template <typename... Args>

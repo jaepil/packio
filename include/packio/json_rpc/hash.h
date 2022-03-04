@@ -60,6 +60,7 @@ inline std::size_t hash(const boost::json::value& v)
 } // json_rpc
 } // packio
 
+#if BOOST_VERSION < 107800
 namespace std {
 
 template <>
@@ -71,5 +72,6 @@ struct hash<boost::json::value> {
 };
 
 } // std
+#endif
 
 #endif // PACKIO_JSON_RPC_HASH_H

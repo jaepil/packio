@@ -39,6 +39,7 @@ class Packager(cpt.packager.ConanMultiPackager):
         compiler,
         compiler_version,
         cppstd,
+        libcxx=None,
         build_type="Release",
         settings=None,
         options=None,
@@ -49,9 +50,8 @@ class Packager(cpt.packager.ConanMultiPackager):
         settings["compiler.cppstd"] = cppstd
         settings["build_type"] = build_type
 
-        if compiler == CLANG and compiler_version == "11" and cppstd == "20":
-            # FIXME: Clang 11 needs libc++ to have coroutines support
-            settings["compiler.libcxx"] = "libc++"
+        if libcxx is not None:
+            settings["compiler.libcxx"] = libcxx
 
         options = options or {}
         if "asio" not in options:
@@ -69,8 +69,6 @@ class Packager(cpt.packager.ConanMultiPackager):
                 {"CXX": f"g++-{compiler_version}", "CC": f"gcc-{compiler_version}"}
             )
         elif compiler == CLANG:
-            if compiler_version == "7.0":
-                compiler_version = "7"
             env_vars.update(
                 {
                     "CXX": f"clang++-{compiler_version}",
@@ -121,38 +119,50 @@ def test_linux():
 
     # fmt: off
     # Test supported GCC versions
-    builder.add(compiler=GCC, compiler_version="7", cppstd="17")
-    builder.add(compiler=GCC, compiler_version="8", cppstd="17")
     builder.add(compiler=GCC, compiler_version="9", cppstd="17")
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"build_samples": True})
+    builder.add(compiler=GCC, compiler_version="10", cppstd="20")
+    builder.add(compiler=GCC, compiler_version="11", cppstd="20", options={"build_samples": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"build_samples": True})
 
-    # Test supported clang versions
-    builder.add(compiler=CLANG, compiler_version="6.0", cppstd="17")
-    builder.add(compiler=CLANG, compiler_version="7.0", cppstd="17")
-    builder.add(compiler=CLANG, compiler_version="8", cppstd="17")
-    builder.add(compiler=CLANG, compiler_version="9", cppstd="17")
-    builder.add(compiler=CLANG, compiler_version="10", cppstd="17")
-    builder.add(compiler=CLANG, compiler_version="11", cppstd="20", options={"build_samples": True})
+    # Test supported clang versions, samples requires coroutines which requires libc++
+    builder.add(compiler=CLANG, compiler_version="11", cppstd="17")
+    builder.add(compiler=CLANG, compiler_version="12", cppstd="20")
+    builder.add(compiler=CLANG, compiler_version="13", cppstd="20")
+    builder.add(compiler=CLANG, compiler_version="14", cppstd="20", libcxx="libc++", options={"build_samples": True})
 
     # Test supported boost versions, with C++20 and coroutines from 1.74.0
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"boost": "1.70.0", "packio:boost_json": False})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"boost": "1.71.0", "packio:boost_json": False})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"boost": "1.72.0", "packio:boost_json": False})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"boost": "1.73.0", "packio:boost_json": False})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"boost": "1.74.0", "packio:boost_json": False})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"boost": "1.75.0"})
+    # Note: use older versions of GCC for older versions of Boost to avoid unexpected compiler warnings
+    builder.add(compiler=GCC, compiler_version="11", cppstd="17", options={"boost": "1.70.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"boost": "1.71.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"boost": "1.72.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"boost": "1.73.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.74.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.75.0", "packio:boost_json": False})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.76.0"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.77.0"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.78.0"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.79.0"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.80.0"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"boost": "1.81.0"})
 
     # Test supported asio versions, with C++20 and coroutines from 1.17.0
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"asio": "1.13.0", "packio:standalone_asio": True})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"asio": "1.14.1", "packio:standalone_asio": True})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="17", options={"asio": "1.16.1", "packio:standalone_asio": True})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"asio": "1.17.0", "packio:standalone_asio": True})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"asio": "1.18.0", "packio:standalone_asio": True})
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"asio": "1.18.1", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"asio": "1.13.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"asio": "1.14.1", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="17", options={"asio": "1.16.1", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.17.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.18.2", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.19.2", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.20.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.21.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.22.1", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.23.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.24.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.26.0", "packio:standalone_asio": True})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"asio": "1.27.0", "packio:standalone_asio": True})
 
     # Test logs and debug build
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"loglevel": "trace"}, build_type="Debug")
-    builder.add(compiler=GCC, compiler_version="10", cppstd="20", options={"loglevel": "trace"})
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"loglevel": "trace"}, build_type="Debug")
+    builder.add(compiler=GCC, compiler_version="12", cppstd="20", options={"loglevel": "trace"})
     # fmt: on
 
     builder.run()
@@ -161,10 +171,10 @@ def test_linux():
 def test_mac():
     builder = Packager()
     # fmt: off
-    builder.add(compiler=APPLE_CLANG, compiler_version="12.0", cppstd="17", build_type="Debug")
-    builder.add(compiler=APPLE_CLANG, compiler_version="12.0", cppstd="17")
-    builder.add(compiler=APPLE_CLANG, compiler_version="12.0", cppstd="20", build_type="Debug")
-    builder.add(compiler=APPLE_CLANG, compiler_version="12.0", cppstd="20", options={"build_samples": True})
+    builder.add(compiler=APPLE_CLANG, compiler_version="13.0", cppstd="17", build_type="Debug")
+    builder.add(compiler=APPLE_CLANG, compiler_version="13.0", cppstd="17")
+    builder.add(compiler=APPLE_CLANG, compiler_version="13.0", cppstd="20", options={"build_samples": True}, build_type="Debug")
+    builder.add(compiler=APPLE_CLANG, compiler_version="13.0", cppstd="20", options={"build_samples": True})
     # fmt: on
     builder.run()
 
@@ -172,9 +182,12 @@ def test_mac():
 def test_windows():
     builder = Packager()
     # fmt: off
-    # FIXME: Compile with C++20 and coroutines
-    builder.add(compiler=MSVC, compiler_version="16", cppstd="17", build_type="Debug")
-    builder.add(compiler=MSVC, compiler_version="16", cppstd="17")
+    # only one compiler version per os in github, read it from the nv
+    compiler_version = os.environ["PACKIO_WINDOWS_COMPILER_VERSION"]
+    builder.add(compiler=MSVC, compiler_version=compiler_version, cppstd="17", build_type="Debug")
+    builder.add(compiler=MSVC, compiler_version=compiler_version, cppstd="17")
+    builder.add(compiler=MSVC, compiler_version=compiler_version, cppstd="20", options={"build_samples": True}, build_type="Debug")
+    builder.add(compiler=MSVC, compiler_version=compiler_version, cppstd="20", options={"build_samples": True})
     # fmt: on
     builder.run()
 

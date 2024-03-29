@@ -20,6 +20,7 @@ set(SOURCES
     tests/basic_test_timeout.cpp
     tests/basic_test_functions.cpp
     tests/basic_test_named_arguments.cpp
+    tests/basic_test_default_arguments.cpp
     tests/basic_test_dispatcher.cpp
     tests/basic_test_end_of_work.cpp
     tests/basic_test_special_callables.cpp
@@ -46,15 +47,6 @@ else ()
     add_compile_options(/wd4702)
     add_compile_definitions(_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING=1)
     add_compile_definitions(_WIN32_WINNT=0x0A00) # win10
-endif ()
-
-# Enable experimental coroutines support if needed
-if (CMAKE_CXX_STANDARD GREATER_EQUAL 20)
-    # FIXME: gcc-11 will support coroutines by default with c++20
-    # remove this and use gcc-11 for c++20 when it is available
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_compile_options(-fcoroutines)
-    endif ()
 endif ()
 
 if (PACKIO_LOGGING)

@@ -6,6 +6,9 @@
 #define PACKIO_JSON_RPC_HASH_H
 
 #include <boost/json.hpp>
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < 107700
 
 namespace packio {
 namespace json_rpc {
@@ -73,5 +76,7 @@ struct hash<boost::json::value> {
 
 } // std
 #endif
+
+#endif // BOOST_VERSION < 107700
 
 #endif // PACKIO_JSON_RPC_HASH_H
